@@ -5,9 +5,11 @@ import com.android.CvbsActivity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.Service;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -26,6 +28,8 @@ public class SoftwareService extends Service {
 	private final static String DVR_PACKAGE_NAME = "com.dvr.android.dvr";
 	private final static String DVR_MAIN_CLASSNAME = "com.dvr.android.dvr.DVRActivity";
 	private final static String DVR_CVBS_CLASSNAME = "com.dvr.android.dvr.CVBSActivity";
+	private final static String DVR_CVBS_ONLY_PACKAGE_NAME = "cn.wl.cvbscamonly";
+	private final static String DVR_CVBS_ONLY_CLASSNAME = "cn.wl.cvbscamonly.CVBSActivity";
 	private final static int DET_CVBS_TIME = 800;
 	
 	public final static String ACTION_CVBS_OUT = "action.zt.cvbs.out";
@@ -174,7 +178,25 @@ public class SoftwareService extends Service {
 		Intent i = new Intent();
 		i.setComponent(new ComponentName(DVR_PACKAGE_NAME, DVR_CVBS_CLASSNAME));
 		i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		startActivity(i);
+		if(checkApkExist(this,i)){
+			startActivity(i);
+		}else{
+			i.setComponent(new ComponentName(DVR_CVBS_ONLY_PACKAGE_NAME, DVR_CVBS_ONLY_CLASSNAME));
+			try{
+				startActivity(i);
+			}catch(ActivityNotFoundException e){
+				
+			}
+		}
+	}
+	
+	public boolean checkApkExist(Context context, Intent intent) {
+		List<ResolveInfo> list =  context.getPackageManager().queryIntentActivities(intent, 0);
+		if(list.size() > 0){
+			return true;
+		}else{
+			return false;
+		}
 	}
 	
 	private boolean isServiceRunning(Context context, String serviceName) {
